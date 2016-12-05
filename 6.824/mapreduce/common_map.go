@@ -67,7 +67,7 @@ func doMap(
 	KVList := mapF(inFile, string(contents))
 
 	for _, kv := range KVList {
-		fileIdx := int(ihash(kv.Key)) % nReduce
+		fileIdx := ihash(kv.Key) % uint32(nReduce)
 		fw[fileIdx].Encode(&kv)
 	}
 }

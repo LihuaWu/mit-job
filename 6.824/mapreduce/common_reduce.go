@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 )
 
 // doReduce does the job of a reduce worker: it reads the intermediate
@@ -48,15 +49,29 @@ func doReduce(
 				log.Fatal("json decode err: ", err)
 			}
 
+			if _, ok := reduceMap[item.Key]; !ok {
+				reduceMap[item.Key] = make([]string, 0)
+			}
+
 			reduceMap[item.Key] = append(reduceMap[item.Key], item.Value)
 		}
 	}
+
+	var keys []string
+
+	for key := range reduceMap {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+	log.Println("sorting keys")
+
 	mf, _ := os.Create(mergeName(jobName, reduceTaskNumber))
 	defer mf.Close()
 	enc := json.NewEncoder(mf)
 
-	for key, value := range reduceMap {
-		err := enc.Encode(KeyValue{key, reduceF(key, value)})
+	for _, key := range keys {
+		err := enc.Encode(&KeyValue{key, reduceF(key, reduceMap[key])})
 		if err != nil {
 			fmt.Println("err:", err)
 		}

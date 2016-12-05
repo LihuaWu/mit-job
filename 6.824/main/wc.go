@@ -17,22 +17,11 @@ import (
 // key/value pairs, each represented by a mapreduce.KeyValue.
 func mapF(document string, value string) (res []mapreduce.KeyValue) {
 	// TODO: you have to write this function
-	words := strings.Fields(value)
-
-	isWord := func(w string) bool {
-		runeBytes := []rune(w)
-		for _, r := range runeBytes {
-			if !unicode.IsLetter(r) {
-				return false
-			}
-		}
-		return true
-	}
+	words := strings.FieldsFunc(value, func(c rune) bool {
+		return !unicode.IsLetter(c)
+	})
 
 	for _, w := range words {
-		if !isWord(w) {
-			continue
-		}
 		res = append(res, mapreduce.KeyValue{Key: w, Value: "1"})
 	}
 	return
@@ -44,6 +33,7 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 func reduceF(key string, values []string) string {
 	// TODO: you also have to write this function
 	var sum int64
+	sum = 0
 	for _, v := range values {
 		cnt, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
