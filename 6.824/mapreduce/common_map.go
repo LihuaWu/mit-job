@@ -61,7 +61,7 @@ func doMap(
 
 	contents, err := ioutil.ReadFile(inFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("read file:", err)
 	}
 
 	KVList := mapF(inFile, string(contents))
