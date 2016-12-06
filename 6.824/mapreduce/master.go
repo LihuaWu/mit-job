@@ -113,7 +113,6 @@ func (mr *Master) run(jobName string, files []string, nreduce int,
 	mr.merge()
 
 	fmt.Printf("%s: Map/Reduce task completed\n", mr.address)
-
 	mr.doneChannel <- true
 }
 
