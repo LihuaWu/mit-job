@@ -18,6 +18,7 @@ package raft
 //
 
 import (
+	"math"
 	"sync"
 
 	"github.com/LihuaWu/mit-job/6.824/labrpc"
@@ -46,7 +47,7 @@ type Entry struct {
 type State struct {
 	currentTerm int     // latest term server has seen
 	votedFor    int     // candidateId that received vote in current term
-	entries     []Entry // log entries.
+	log         []Entry // log entries.
 	commitIndex int
 	lastApplied int
 
@@ -54,6 +55,14 @@ type State struct {
 	nextIndex  []int
 	matchIndex []int
 }
+
+type Role int
+
+const (
+	Leader Role = iota
+	Follower
+	Candidate
+)
 
 //
 // A Go object implementing a single Raft peer.
@@ -63,12 +72,12 @@ type Raft struct {
 	peers     []*labrpc.ClientEnd
 	persister *Persister
 	me        int // index into peers[]
-	state     State
 
 	// Your data here.
 	// Look at the paper's Figure 2 for a description of what
 	// state a Raft server must maintain.
-
+	state *State
+	role  Role
 }
 
 // return currentTerm and whether this server
@@ -134,6 +143,19 @@ type RequestVoteReply struct {
 //
 func (rf *Raft) RequestVote(args RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here.
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+
+	reply := &RequestVoteReply{term: rf.state.currentTerm, voteGranted: false}
+	if args.term < rf.state.currentTerm {
+		return
+	}
+	if (rf.state.votedFor < 0 || rf.state.votedFor == rf.me) &&
+		(args.lastLogIndex >= rf.state.lastApplied &&
+			args.lastLogTerm == rf.state.currentTerm) {
+		reply.voteGranted = true
+	}
+	return
 }
 
 //
@@ -171,6 +193,43 @@ type AppendEntriesArgs struct {
 type AppendEntriesReply struct {
 	term    int  //currentTerm, for leader to update itself
 	success bool // true of follower contained entry matching prevLogIndex and prevLogTerm
+}
+
+func (rf *Raft) AppendEntries(args AppendEntriesArgs, reply *AppendEntriesReply) {
+	// Your code here.
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+
+	reply := &AppendEntriesReply{term: rf.state.currentTerm, true}
+	if args.term < rf.state.currentTerm {
+		reply.success = false
+	} else if len(rf.state.log) <= args.prevLogIndex ||
+		rf.state.log[args.prevLogIndex].term != args.prevLogTerm {
+		reply.success = false
+	} else {
+		currIdx := 0
+		for i := 0; i < len(args.entries); i++ {
+			currIdx = i + prevLogIndex + 1
+			if currIdx >= len(rf.state.log) { // log size too small, append new entries
+				break
+			} else if rf.state.log[currIdx].term != args.entries[i].term {
+				rf.state.log = rf.state.log[0:currIdx] // delete the existing entry and all follow it
+				break
+			} else {
+			}
+		}
+		rf.state.log = append(rf.state.log, entries[currIdx]...) //append any new entries not alredy in the log
+		if args.leaderCommit > rf.state.commitIndex {            // rule no.5
+			rf.state.commitIndex = math.Min(args.leaderCommit, rf.state.log[len(rf.state.log)-1])
+		}
+	}
+	return
+}
+
+func (rf *Raft) sendAppendEntries(server int, args AppendEntriesArgs,
+	reply *AppendEntriesReply) bool {
+	ok := rf.peers[server].Call("Raft.AppendEntries", args, reply)
+	return ok
 }
 
 //
