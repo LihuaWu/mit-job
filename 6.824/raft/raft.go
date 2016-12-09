@@ -209,7 +209,7 @@ func (rf *Raft) AppendEntries(args AppendEntriesArgs, reply *AppendEntriesReply)
 	} else {
 		currIdx := 0
 		for i := 0; i < len(args.entries); i++ {
-			currIdx = i + prevLogIndex + 1
+			currIdx = i + prevLogIndex        // zero based store int log, while first index is 1
 			if currIdx >= len(rf.state.log) { // log size too small, append new entries
 				break
 			} else if rf.state.log[currIdx].term != args.entries[i].term {
@@ -218,8 +218,8 @@ func (rf *Raft) AppendEntries(args AppendEntriesArgs, reply *AppendEntriesReply)
 			} else {
 			}
 		}
-		rf.state.log = append(rf.state.log, entries[currIdx]...) //append any new entries not alredy in the log
-		if args.leaderCommit > rf.state.commitIndex {            // rule no.5
+		rf.state.log = append(rf.state.log, entries[currIdx-len(args.entries)]...) //append any new entries not alredy in the log
+		if args.leaderCommit > rf.state.commitIndex {                              // rule no.5
 			rf.state.commitIndex = math.Min(args.leaderCommit, rf.state.log[len(rf.state.log)-1])
 		}
 	}
