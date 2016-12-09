@@ -38,15 +38,15 @@ type ApplyMsg struct {
 	Snapshot    []byte // ignore for lab2; only used in lab3
 }
 
-type Log struct {
+type Entry struct {
 	command string
 	term    int // first index is 1
 }
 
 type State struct {
-	currentTerm int   // latest term server has seen
-	votedFor    int   // candidateId that received vote in current term
-	logEntries  []Log // log entries.
+	currentTerm int     // latest term server has seen
+	votedFor    int     // candidateId that received vote in current term
+	entries     []Entry // log entries.
 	commitIndex int
 	lastApplied int
 
@@ -63,6 +63,7 @@ type Raft struct {
 	peers     []*labrpc.ClientEnd
 	persister *Persister
 	me        int // index into peers[]
+	state     State
 
 	// Your data here.
 	// Look at the paper's Figure 2 for a description of what
@@ -113,6 +114,10 @@ func (rf *Raft) readPersist(data []byte) {
 //
 type RequestVoteArgs struct {
 	// Your data here.
+	term         int //candidate's term
+	candidateId  int // candidate requesting vote
+	lastLogIndex int // index of candidate's last log entry
+	lastLogTerm  int // term of candidate's last log entry
 }
 
 //
@@ -120,6 +125,8 @@ type RequestVoteArgs struct {
 //
 type RequestVoteReply struct {
 	// Your data here.
+	term        int  //currentTerm, for candidate to update itself
+	voteGranted bool // true means candidate received vote.
 }
 
 //
@@ -149,6 +156,21 @@ func (rf *Raft) RequestVote(args RequestVoteArgs, reply *RequestVoteReply) {
 func (rf *Raft) sendRequestVote(server int, args RequestVoteArgs, reply *RequestVoteReply) bool {
 	ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
 	return ok
+}
+
+type AppendEntriesArgs struct {
+	term         int //leader's term
+	leaderId     int // so follower can redirect clients
+	prevLogIndex int //index of log entry immediately perceeding new ones
+
+	prevLogTerm  int     // term of prevLogIndex entry
+	entries      []Entry // log entries to store(empty for heart beat, may send more than one for efficiency)
+	leaderCommit int     // leader's commitIndex
+}
+
+type AppendEntriesReply struct {
+	term    int  //currentTerm, for leader to update itself
+	success bool // true of follower contained entry matching prevLogIndex and prevLogTerm
 }
 
 //
