@@ -38,6 +38,23 @@ type ApplyMsg struct {
 	Snapshot    []byte // ignore for lab2; only used in lab3
 }
 
+type Log struct {
+	command string
+	term    int // first index is 1
+}
+
+type State struct {
+	currentTerm int   // latest term server has seen
+	votedFor    int   // candidateId that received vote in current term
+	logEntries  []Log // log entries.
+	commitIndex int
+	lastApplied int
+
+	//Reinitialized after election
+	nextIndex  []int
+	matchIndex []int
+}
+
 //
 // A Go object implementing a single Raft peer.
 //
