@@ -14,6 +14,20 @@ Debugging
     func DPrintf(format string, a ...interface{}) (n int, err error)
 
 
+#### type AppendEntriesArgs
+
+    type AppendEntriesArgs struct {
+    }
+
+
+
+#### type AppendEntriesReply
+
+    type AppendEntriesReply struct {
+    }
+
+
+
 #### type ApplyMsg
 
     type ApplyMsg struct {
@@ -27,6 +41,13 @@ Debugging
 as each Raft peer becomes aware that successive log entries are committed, the
 peer should send an ApplyMsg to the service (or tester) on the same server, via
 the applyCh passed to Make().
+
+#### type Entry
+
+    type Entry struct {
+    }
+
+
 
 #### type Persister
 
@@ -140,3 +161,8 @@ example RequestVote RPC arguments structure.
 
 
 example RequestVote RPC reply structure.
+
+#### type State
+
+    type State struct {
+    }
