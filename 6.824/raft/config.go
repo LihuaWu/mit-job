@@ -8,20 +8,16 @@ package raft
 // test with the original before submitting.
 //
 
-import (
-	"log"
-	"runtime"
-	"sync"
-	"testing"
-
-	"github.com/LihuaWu/mit-job/6.824/labrpc"
-
-	crand "crypto/rand"
-	"encoding/base64"
-	"fmt"
-	"sync/atomic"
-	"time"
-)
+import "labrpc"
+import "log"
+import "sync"
+import "testing"
+import "runtime"
+import crand "crypto/rand"
+import "encoding/base64"
+import "sync/atomic"
+import "time"
+import "fmt"
 
 func randstring(n int) string {
 	b := make([]byte, 2*n)
