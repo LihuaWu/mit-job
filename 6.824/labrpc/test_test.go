@@ -1,11 +1,14 @@
 package labrpc
 
-import "testing"
-import "strconv"
-import "sync"
-import "runtime"
-import "time"
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"runtime"
+	"strconv"
+	"sync"
+	"testing"
+	"time"
+)
 
 type JunkArgs struct {
 	X int
@@ -49,6 +52,26 @@ func (js *JunkServer) Handler4(args *JunkArgs, reply *JunkReply) {
 // args is a not pointer
 func (js *JunkServer) Handler5(args JunkArgs, reply *JunkReply) {
 	reply.X = "no pointer"
+}
+
+func TestExa(t *testing.T) {
+	rn := MakeNetwork()
+	e := rn.MakeEnd("end-will")
+
+	js := &JunkServer{}
+	svc := MakeService(js)
+	rs := MakeServer()
+	rs.AddService(svc)
+	rn.AddServer("server-will", rs)
+
+	rn.Connect("end-will", "server-will")
+	rn.Enable("end-will", true)
+	{
+		reply := ""
+		e.Call("JunkServer.Handler2", 111, &reply)
+		log.Println("reply: ", reply)
+	}
+
 }
 
 func TestBasic(t *testing.T) {
